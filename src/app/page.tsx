@@ -1,7 +1,7 @@
 'use client';
 
 import { Container, Title, Group, Badge, Box, SimpleGrid, SegmentedControl, Text, Tabs, rem } from '@mantine/core';
-import { IconBrandApple, IconChartLine, IconClock, IconTrendingUp, IconActivity, IconTargetArrow } from '@tabler/icons-react';
+import { IconBrandApple, IconChartLine, IconClock, IconTrendingUp, IconActivity, IconTargetArrow, IconWorld, IconNews } from '@tabler/icons-react';
 import { useState } from 'react';
 import {
   MarketIndices,
@@ -9,7 +9,9 @@ import {
   ETFFlows,
   MarketMap,
   StockChart,
-  PerformanceTab
+  PerformanceTab,
+  MacroAnalysis,
+  NewsEvents
 } from '@/components/dashboard';
 import ClosingBellTab from '@/components/dashboard/ClosingBellTab';
 
@@ -72,14 +74,14 @@ export default function Dashboard() {
             <Tabs.Tab value="dashboard" leftSection={<IconChartLine style={iconStyle} />}>
               Dashboard
             </Tabs.Tab>
+            <Tabs.Tab value="macro" leftSection={<IconWorld style={iconStyle} />}>
+              Macro
+            </Tabs.Tab>
             <Tabs.Tab value="closing-bell" leftSection={<IconClock style={iconStyle} />}>
               Closing Bell
             </Tabs.Tab>
             <Tabs.Tab value="performance" leftSection={<IconTargetArrow style={iconStyle} />}>
               Performance
-            </Tabs.Tab>
-            <Tabs.Tab value="momentum" leftSection={<IconTrendingUp style={iconStyle} />} disabled>
-              Momentum
             </Tabs.Tab>
             <Tabs.Tab value="options" leftSection={<IconActivity style={iconStyle} />} disabled>
               Options Flow
@@ -106,9 +108,16 @@ export default function Dashboard() {
               <SmartMoneyTable />
             </Box>
 
-            {/* ETF Flows */}
-            <ETFFlows />
+            {/* ETF Flows + News Events */}
+            <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mb="lg">
+              <ETFFlows />
+              <NewsEvents />
+            </SimpleGrid>
           </>
+        )}
+
+        {activeTab === 'macro' && (
+          <MacroAnalysis />
         )}
 
         {activeTab === 'closing-bell' && (
@@ -117,12 +126,6 @@ export default function Dashboard() {
 
         {activeTab === 'performance' && (
           <PerformanceTab />
-        )}
-
-        {activeTab === 'momentum' && (
-          <Box py="xl">
-            <Text ta="center" c="dimmed">Coming Soon</Text>
-          </Box>
         )}
 
         {activeTab === 'options' && (
@@ -137,7 +140,7 @@ export default function Dashboard() {
         <Container size="xl">
           <Group justify="center">
             <Text size="xs" c="dimmed">
-              © 2025 US Market Dashboard | Powered by Next.js + Mantine
+              © 2026 US Market Dashboard | Powered by Next.js + Mantine
             </Text>
           </Group>
         </Container>
