@@ -2,7 +2,7 @@
 
 import { Container, Title, Group, Badge, Box, SimpleGrid, SegmentedControl, Text, Tabs, rem } from '@mantine/core';
 import { IconBrandApple, IconChartLine, IconClock, IconTrendingUp, IconActivity, IconTargetArrow, IconWorld, IconNews } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   MarketIndices,
   SmartMoneyTable,
@@ -18,6 +18,12 @@ import ClosingBellTab from '@/components/dashboard/ClosingBellTab';
 export default function Dashboard() {
   const [market, setMarket] = useState('us');
   const [activeTab, setActiveTab] = useState<string | null>('dashboard');
+  const [selectedTicker, setSelectedTicker] = useState('AAPL');
+
+  // Callback to handle stock selection from SmartMoneyTable
+  const handleStockSelect = useCallback((ticker: string) => {
+    setSelectedTicker(ticker);
+  }, []);
 
   const iconStyle = { width: rem(16), height: rem(16) };
 
@@ -99,13 +105,13 @@ export default function Dashboard() {
 
             {/* Chart + Market Map */}
             <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="md" mb="lg">
-              <StockChart defaultTicker="AAPL" />
+              <StockChart ticker={selectedTicker} />
               <MarketMap />
             </SimpleGrid>
 
             {/* Smart Money Table */}
             <Box mb="lg">
-              <SmartMoneyTable />
+              <SmartMoneyTable onStockSelect={handleStockSelect} />
             </Box>
 
             {/* ETF Flows + News Events */}

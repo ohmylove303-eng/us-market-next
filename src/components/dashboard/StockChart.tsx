@@ -2,7 +2,7 @@
 
 import { Card, Text, Group, Box, SegmentedControl, Skeleton } from '@mantine/core';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { designTokens } from '@/lib/theme';
 
@@ -18,12 +18,22 @@ interface ChartDataPoint {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 interface StockChartProps {
+    ticker?: string;
     defaultTicker?: string;
 }
 
-export default function StockChart({ defaultTicker = 'AAPL' }: StockChartProps) {
-    const [ticker, setTicker] = useState(defaultTicker);
+export default function StockChart({ ticker: externalTicker, defaultTicker = 'AAPL' }: StockChartProps) {
+    // Use external ticker if provided, otherwise use internal state
+    const [internalTicker, setInternalTicker] = useState(defaultTicker);
+    const ticker = externalTicker || internalTicker;
     const [period, setPeriod] = useState('3M');
+
+    // Update internal ticker when external ticker changes
+    useEffect(() => {
+        if (externalTicker) {
+            setInternalTicker(externalTicker);
+        }
+    }, [externalTicker]);
 
     const { data, isLoading } = useSWR(
         `/api/us/chart/${ticker}`,

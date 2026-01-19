@@ -33,9 +33,14 @@ interface AIAnalysis {
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
-export default function SmartMoneyTable() {
+interface SmartMoneyTableProps {
+    onStockSelect?: (ticker: string) => void;
+}
+
+export default function SmartMoneyTable({ onStockSelect }: SmartMoneyTableProps) {
     const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const [historyDates, setHistoryDates] = useState<string[]>([]);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Fetch available history dates
     useEffect(() => {
@@ -70,6 +75,11 @@ export default function SmartMoneyTable() {
         setAiAnalysis(null);
         setLoadingAI(true);
         open();
+
+        // Notify parent to update chart
+        if (onStockSelect) {
+            onStockSelect(pick.ticker);
+        }
 
         try {
             const response = await fetch(`/api/us/ai-summary/${pick.ticker}`);
