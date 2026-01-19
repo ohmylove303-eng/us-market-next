@@ -1,10 +1,10 @@
 'use client';
 
-import { Card, Table, Text, Badge, Group, Skeleton, ScrollArea, Modal, Stack, Divider, Title, Grid, Paper, Loader, Center } from '@mantine/core';
-import { IconArrowUp, IconArrowDown, IconCalendar, IconClock, IconChartLine, IconRobot, IconX } from '@tabler/icons-react';
+import { Card, Table, Text, Badge, Group, Skeleton, ScrollArea, Modal, Stack, Divider, Title, Grid, Paper, Loader, Center, Menu, ActionIcon, Tooltip } from '@mantine/core';
+import { IconArrowUp, IconArrowDown, IconCalendar, IconClock, IconChartLine, IconRobot, IconHistory, IconChevronDown } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import useSWR from 'swr';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { designTokens } from '@/lib/theme';
 
 interface Pick {
@@ -34,10 +34,30 @@ interface AIAnalysis {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function SmartMoneyTable() {
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [historyDates, setHistoryDates] = useState<string[]>([]);
+
+    // Fetch available history dates
+    useEffect(() => {
+        fetch('/api/us/history-dates')
+            .then(res => res.json())
+            .then(data => {
+                if (data.dates && data.dates.length > 0) {
+                    setHistoryDates(data.dates);
+                }
+            })
+            .catch(console.error);
+    }, []);
+
+    // Determine which API endpoint to use
+    const apiUrl = selectedDate
+        ? `/api/us/history/${selectedDate}`
+        : '/api/us/smart-money';
+
     const { data, error, isLoading } = useSWR(
-        '/api/us/smart-money',
+        apiUrl,
         fetcher,
-        { refreshInterval: 300000 }
+        { refreshInterval: selectedDate ? 0 : 300000 }
     );
 
     const [opened, { open, close }] = useDisclosure(false);
@@ -89,6 +109,15 @@ export default function SmartMoneyTable() {
         return dateStr || '날짜 정보 없음';
     };
 
+    const formatDateShort = (dateStr: string) => {
+        try {
+            const [year, month, day] = dateStr.split('-');
+            return `${month}/${day}`;
+        } catch {
+            return dateStr;
+        }
+    };
+
     const getBadgeColor = (rec: string) => {
         if (rec?.toLowerCase().includes('buy')) return 'teal';
         if (rec?.toLowerCase().includes('hold')) return 'yellow';
@@ -108,10 +137,74 @@ export default function SmartMoneyTable() {
                             </Text>
                         </Group>
                     </Group>
-                    <Badge variant="light" color="blue" leftSection={<IconClock size={12} />}>
-                        실시간 업데이트
-                    </Badge>
+
+                    <Group gap="sm">
+                        {/* History Date Selector */}
+                        {historyDates.length > 0 && (
+                            <Menu shadow="md" width={200}>
+                                <Menu.Target>
+                                    <Tooltip label="과거 추천 비교" position="bottom">
+                                        <ActionIcon
+                                            variant={selectedDate ? "filled" : "light"}
+                                            color={selectedDate ? "orange" : "gray"}
+                                            size="lg"
+                                        >
+                                            <IconHistory size={18} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                </Menu.Target>
+                                <Menu.Dropdown>
+                                    <Menu.Label>과거 분석일 선택</Menu.Label>
+                                    <Menu.Item
+                                        onClick={() => setSelectedDate(null)}
+                                        c={!selectedDate ? 'blue' : undefined}
+                                    >
+                                        📊 현재 (실시간)
+                                    </Menu.Item>
+                                    <Menu.Divider />
+                                    {historyDates.slice(0, 10).map(date => (
+                                        <Menu.Item
+                                            key={date}
+                                            onClick={() => setSelectedDate(date)}
+                                            c={selectedDate === date ? 'orange' : undefined}
+                                        >
+                                            📅 {date}
+                                        </Menu.Item>
+                                    ))}
+                                </Menu.Dropdown>
+                            </Menu>
+                        )}
+
+                        <Badge
+                            variant="light"
+                            color={selectedDate ? "orange" : "blue"}
+                            leftSection={selectedDate ? <IconHistory size={12} /> : <IconClock size={12} />}
+                        >
+                            {selectedDate ? `${selectedDate} 기록` : "실시간 업데이트"}
+                        </Badge>
+                    </Group>
                 </Group>
+
+                {/* Historical comparison notice */}
+                {selectedDate && (
+                    <Paper
+                        p="sm"
+                        mb="md"
+                        radius="md"
+                        style={{
+                            background: 'rgba(255, 165, 0, 0.1)',
+                            border: '1px solid rgba(255, 165, 0, 0.3)'
+                        }}
+                    >
+                        <Group gap="xs">
+                            <IconHistory size={16} color="orange" />
+                            <Text size="sm" c="orange">
+                                <strong>{selectedDate}</strong> 분석 데이터를 보고 있습니다.
+                                "현재가"는 오늘 기준이며, 당시 추천가와 비교할 수 있습니다.
+                            </Text>
+                        </Group>
+                    </Paper>
+                )}
 
                 <ScrollArea>
                     <Table highlightOnHover verticalSpacing="sm" horizontalSpacing="md">
@@ -124,67 +217,77 @@ export default function SmartMoneyTable() {
                                 <Table.Th>AI 추천</Table.Th>
                                 <Table.Th style={{ textAlign: 'right' }}>추천가</Table.Th>
                                 <Table.Th style={{ textAlign: 'right' }}>현재가</Table.Th>
-                                <Table.Th style={{ textAlign: 'right' }}>목표 UPSIDE</Table.Th>
+                                <Table.Th style={{ textAlign: 'right' }}>
+                                    {selectedDate ? '수익률' : '목표 UPSIDE'}
+                                </Table.Th>
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
-                            {picks.slice(0, 10).map((pick, idx) => (
-                                <Table.Tr
-                                    key={pick.ticker}
-                                    style={{ cursor: 'pointer' }}
-                                    onClick={() => handleStockClick(pick)}
-                                >
-                                    <Table.Td>
-                                        <Text c="dimmed" size="sm">{idx + 1}</Text>
-                                    </Table.Td>
-                                    <Table.Td>
-                                        <Group gap="xs">
-                                            <Text fw={600} c="blue" style={{ textDecoration: 'underline' }}>
-                                                {pick.ticker}
-                                            </Text>
-                                            <Text size="xs" c="dimmed">{pick.name?.slice(0, 20)}</Text>
-                                        </Group>
-                                    </Table.Td>
-                                    <Table.Td>
-                                        <Badge variant="outline" size="sm">{pick.sector}</Badge>
-                                    </Table.Td>
-                                    <Table.Td>
-                                        <Text fw={600} c="blue">{pick.final_score?.toFixed(1)}</Text>
-                                    </Table.Td>
-                                    <Table.Td>
-                                        <Badge color={getBadgeColor(pick.ai_recommendation)} variant="filled" size="sm">
-                                            {pick.ai_recommendation || 'Hold'}
-                                        </Badge>
-                                    </Table.Td>
-                                    <Table.Td style={{ textAlign: 'right' }}>
-                                        <Text size="sm">${pick.price_at_rec?.toFixed(2) || 'N/A'}</Text>
-                                    </Table.Td>
-                                    <Table.Td style={{ textAlign: 'right' }}>
-                                        <Text size="sm" fw={500}>${pick.current_price?.toFixed(2)}</Text>
-                                    </Table.Td>
-                                    <Table.Td style={{ textAlign: 'right' }}>
-                                        <Group gap={4} justify="flex-end">
-                                            {(pick.target_upside || 0) >= 0 ? (
-                                                <IconArrowUp size={14} color={designTokens.colors.positive} />
-                                            ) : (
-                                                <IconArrowDown size={14} color={designTokens.colors.negative} />
-                                            )}
-                                            <Text
-                                                fw={600}
-                                                c={(pick.target_upside || 0) >= 0 ? 'teal' : 'red'}
-                                            >
-                                                {pick.target_upside >= 0 ? '+' : ''}{pick.target_upside?.toFixed(1)}%
-                                            </Text>
-                                        </Group>
-                                    </Table.Td>
-                                </Table.Tr>
-                            ))}
+                            {picks.slice(0, 10).map((pick, idx) => {
+                                // For historical data, show actual performance
+                                const displayChange = selectedDate
+                                    ? pick.change_since_rec
+                                    : pick.target_upside;
+
+                                return (
+                                    <Table.Tr
+                                        key={pick.ticker}
+                                        style={{ cursor: 'pointer' }}
+                                        onClick={() => handleStockClick(pick)}
+                                    >
+                                        <Table.Td>
+                                            <Text c="dimmed" size="sm">{idx + 1}</Text>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Group gap="xs">
+                                                <Text fw={600} c="blue" style={{ textDecoration: 'underline' }}>
+                                                    {pick.ticker}
+                                                </Text>
+                                                <Text size="xs" c="dimmed">{pick.name?.slice(0, 20)}</Text>
+                                            </Group>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Badge variant="outline" size="sm">{pick.sector}</Badge>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Text fw={600} c="blue">{pick.final_score?.toFixed(1)}</Text>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Badge color={getBadgeColor(pick.ai_recommendation)} variant="filled" size="sm">
+                                                {pick.ai_recommendation || 'Hold'}
+                                            </Badge>
+                                        </Table.Td>
+                                        <Table.Td style={{ textAlign: 'right' }}>
+                                            <Text size="sm">${pick.price_at_rec?.toFixed(2) || 'N/A'}</Text>
+                                        </Table.Td>
+                                        <Table.Td style={{ textAlign: 'right' }}>
+                                            <Text size="sm" fw={500}>${pick.current_price?.toFixed(2)}</Text>
+                                        </Table.Td>
+                                        <Table.Td style={{ textAlign: 'right' }}>
+                                            <Group gap={4} justify="flex-end">
+                                                {(displayChange || 0) >= 0 ? (
+                                                    <IconArrowUp size={14} color={designTokens.colors.positive} />
+                                                ) : (
+                                                    <IconArrowDown size={14} color={designTokens.colors.negative} />
+                                                )}
+                                                <Text
+                                                    fw={600}
+                                                    c={(displayChange || 0) >= 0 ? 'teal' : 'red'}
+                                                >
+                                                    {(displayChange || 0) >= 0 ? '+' : ''}{displayChange?.toFixed(1)}%
+                                                </Text>
+                                            </Group>
+                                        </Table.Td>
+                                    </Table.Tr>
+                                );
+                            })}
                         </Table.Tbody>
                     </Table>
                 </ScrollArea>
 
                 <Text size="xs" c="dimmed" mt="md" ta="center">
                     💡 종목을 클릭하면 AI 상세 분석을 확인할 수 있습니다
+                    {historyDates.length > 0 && " | 🕐 히스토리 아이콘으로 과거 추천 비교"}
                 </Text>
             </Card>
 
