@@ -7,10 +7,11 @@ import {
     IconChartBar,
     IconCoin,
     IconGasStation,
-    IconGold,
+    IconCoins,
     IconCurrencyBitcoin,
     IconWorld
 } from '@tabler/icons-react';
+
 import useSWR from 'swr';
 
 interface MacroIndicator {
@@ -95,7 +96,7 @@ export default function MacroAnalysis() {
         'VIX': { icon: IconChartBar, displayName: 'VIX (변동성)' },
         'DXY': { icon: IconWorld, displayName: '달러 인덱스' },
         '10Y_Yield': { icon: IconTrendingUp, displayName: '10년물 금리' },
-        'GOLD': { icon: IconGold, displayName: '금 (Gold)' },
+        'GOLD': { icon: IconCoins, displayName: '금 (Gold)' },
         'OIL': { icon: IconGasStation, displayName: '원유 (WTI)' },
         'BTC': { icon: IconCurrencyBitcoin, displayName: '비트코인' },
         'SPY': { icon: IconTrendingUp, displayName: 'S&P 500 ETF' },
