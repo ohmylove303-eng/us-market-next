@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-market-dashboard-jsh.onrender.com';
+import { API_BASE_URL } from '@/lib/config';
 
 export async function GET(
     request: NextRequest,

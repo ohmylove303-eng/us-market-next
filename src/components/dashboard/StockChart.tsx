@@ -37,6 +37,19 @@ export default function StockChart({ ticker = 'AAPL' }: StockChartProps) {
 
     const rawData = data?.candles || [];
 
+    if (!isLoading && rawData.length === 0) {
+        return (
+            <Card className="glass-card" padding="lg" radius="lg" h={400}>
+                <Box h="100%" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', opacity: 0.7 }}>
+                    <Text size="lg" fw={600} mb="xs">No Data Available</Text>
+                    <Text size="sm" c="dimmed">Unable to fetch chart data for {ticker}.</Text>
+                    <Text size="xs" c="dimmed" mt="xs">Backend might be sleeping.</Text>
+                </Box>
+            </Card>
+        );
+    }
+
+
     // Convert timestamp to readable date format
     const chartData: ChartDataPoint[] = rawData.map((d: any) => ({
         date: new Date(d.time * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

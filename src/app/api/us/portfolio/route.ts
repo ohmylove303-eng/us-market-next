@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-
-const API_BASE = 'https://us-market-dashboard-jsh.onrender.com';
+import { API_BASE_URL } from '@/lib/config';
+const API_BASE = API_BASE_URL;
 
 export async function GET() {
     try {

@@ -1,5 +1,7 @@
 // API client for Flask backend
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://us-market-dashboard-jsh.onrender.com';
+import { API_BASE_URL } from '@/lib/config';
+const API_BASE = API_BASE_URL;
+
 
 export interface MarketIndex {
     symbol: string;

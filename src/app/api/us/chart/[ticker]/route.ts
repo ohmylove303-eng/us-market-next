@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { API_BASE_URL } from '@/lib/config';
 
-const API_BASE = 'https://us-market-dashboard-jsh.onrender.com';
 
 export async function GET(
     request: Request,
@@ -9,7 +9,9 @@ export async function GET(
     const { ticker } = await params;
 
     try {
-        const response = await fetch(`${API_BASE}/api/us/stock-chart/${ticker}`, {
+        console.log(`Fetching chart for ${ticker} from ${API_BASE_URL}`);
+        const response = await fetch(`${API_BASE_URL}/api/us/stock-chart/${ticker}`, {
+
             headers: { 'Content-Type': 'application/json' },
             next: { revalidate: 60 }
         });
